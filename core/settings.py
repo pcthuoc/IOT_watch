@@ -13,6 +13,14 @@ load_dotenv()
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = Path(__file__).parent
 CORE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+# settings.py
+ZALO_TTS_API_KEY = "r4OQbtCrRbldRpM15AUEHGk3Q5BrZ857"
+MQTT_BROKER_HOST = os.getenv('MQTT_BROKER_HOST', '103.252.136.73')
+MQTT_BROKER_PORT = int(os.getenv('MQTT_BROKER_PORT', 1883))
+MQTT_TOPIC = os.getenv('MQTT_TOPIC', 'IOT/#')
+MQTT_USERNAME = os.getenv('MQTT_USERNAME', 'admin')
+MQTT_PASSWORD = os.getenv('MQTT_PASSWORD', 'admin')
+TIME_SAVE = os.getenv('TIME_SAVE', 5)
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.environ.get('SECRET_KEY')
@@ -25,19 +33,26 @@ DEVEL   = os.getenv('DEVEL', False)
 SERVER  = os.getenv('DEVEL', '127.0.0.1')
 
 # load production server from .env
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', SERVER]
+ALLOWED_HOSTS = ['*']
 
 # Application definition
 
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
+    'channels',
+    'daphne',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'app',  # Enable the inner app
-    'customers'
+    'import_export',
+    
+    'app',  # Enable the inner appclear
+    'sensors',
+    'alert',
+    'reminder',
+    'mqtt_call'
 ]
 
 MIDDLEWARE = [
@@ -71,8 +86,19 @@ TEMPLATES = [
         },
     },
 ]
+ASGI_APPLICATION = "core.asgi.application"
+REDIS_HOST = os.getenv('REDIS_HOST', '0.0.0.0')
+REDIS_PORT = os.getenv('REDIS_PORT', 6379)
 
-WSGI_APPLICATION = 'core.wsgi.application'
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [(str(REDIS_HOST), int(REDIS_PORT))]
+
+        },
+    },
+}
 
 # Database
 # https://docs.djangoproject.com/en/3.0/ref/settings/#databases
@@ -108,7 +134,8 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Ho_Chi_Minh'  # Đặt múi giờ là múi giờ TP.HCM
+
 
 USE_I18N = True
 

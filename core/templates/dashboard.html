@@ -1,503 +1,450 @@
 {% extends "layouts/base.html" %}
 
-{% block title %} Dashboard {% endblock %} 
+{% block title %} Dashboard {% endblock %}
 
 <!-- Specific Page CSS goes HERE  -->
 {% block stylesheets %}{% endblock stylesheets %}
 
 {% block content %}
 
-    <main class="content">
+<main class="content">
 
-        {% include 'includes/navigation.html' %}
+    {% include 'includes/navigation.html' %}
 
-        <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center py-4">
-            <div class="btn-toolbar dropdown">
-                <button class="btn btn-primary btn-sm mr-2 dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    <span class="fas fa-plus mr-2"></span>New Task
-                </button>
-                <div class="dropdown-menu dashboard-dropdown dropdown-menu-left mt-2">
-                    <a class="dropdown-item font-weight-bold" href="#"><span class="fas fa-tasks"></span>New Task</a>
-                    <a class="dropdown-item font-weight-bold" href="#"><span class="fas fa-cloud-upload-alt"></span>Upload Files</a>
-                    <a class="dropdown-item font-weight-bold" href="#"><span class="fas fa-user-shield"></span>Preview Security</a>
-                    <div role="separator" class="dropdown-divider"></div>
-                    <a class="dropdown-item font-weight-bold" href="#"><span class="fas fa-rocket text-danger"></span>Upgrade to Pro</a>
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center py-4">
+        <button class="btn btn-danger btn-sm mr-2 dropdown-toggle" data-toggle="modal" data-target="#ttsModal">
+            <span class="fas fa-phone"></span> Phát thông tin tới thiết bị
+        </button>
+
+
+    </div>
+
+
+    <div class="row justify-content-md-center">
+        {% for sensor in sensors %}
+
+        <div class="col-12 col-sm-6 col-xl-4 mb-4">
+            <div class="card border-light shadow-sm" data-sensor-id="{{ sensor.sensor_id }}">
+
+                <div class="card-body">
+                    <div class="row d-block d-xl-flex align-items-center">
+                        <div
+                            class="col-12 col-xl-5 text-xl-center mb-3 mb-xl-0 d-flex align-items-center justify-content-xl-center">
+                            <div class="icon icon-shape icon-md rounded mr-4 mr-sm-0 
+                                        {% if sensor.sensor_name == 'Nhiệt Độ' %}
+                                            icon-shape-danger
+                                        {% elif sensor.sensor_name == 'Nhịp Tim' %}
+                                            icon-shape-primary
+                                        {% elif sensor.sensor_name == 'SPO2' %}
+                                            icon-shape-success
+                                        {% else %}
+                                            icon-shape-gray
+                                        {% endif %}
+                                    ">
+                                <span class="fas 
+                                            {% if sensor.sensor_name == 'Nhiệt Độ' %}
+                                                fa-thermometer-half
+                                            {% elif sensor.sensor_name == 'Nhịp Tim' %}
+                                                fa-heartbeat
+                                            {% elif sensor.sensor_name == 'SPO2' %}
+                                                fa-lungs
+                        
+                                            {% else %}
+                                                fa-question
+                                            {% endif %}
+                                        "></span>
+                            </div>
+                        </div>
+                        <div class="col-12 col-xl-7 px-xl-0">
+                            <h2 class="h5">{{ sensor.sensor_name }}</h2>
+                            <h3 class="mb-1">{{ sensor.value }} {{ sensor.unit }}</h3>
+                            <small>Cập nhật lúc: {{ sensor.updated_at|date:"H:i d/m/Y" }}</small>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <div class="btn-group">
-                <button type="button" class="btn btn-sm btn-outline-primary">Share</button>
-                <button type="button" class="btn btn-sm btn-outline-primary">Export</button>
+        </div>
+        {% endfor %}
+    </div>
+    <div class="row">
+        <div class="col-12 col-xl-8 mb-4">
+            <div class="row">
+                <div class="col-12 mb-4">
+                    <div class="card border-light shadow-sm">
+                        <div class="card-header">
+                            <div class="row align-items-center">
+                                <div class="col">
+                                    <h2 class="h5">Dữ liệu đồ thị cảm biến</h2>
+                                </div>
+
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <!-- Nhóm nút chọn mốc thời gian -->
+                            <div class="mb-3 text-center">
+                                <div class="btn-group btn-group-sm" role="group" aria-label="Chọn mốc thời gian">
+                                    <button class="btn btn-outline-primary range-btn" data-range="1h">1h</button>
+                                    <button class="btn btn-outline-primary range-btn" data-range="3h">3h</button>
+                                    <button class="btn btn-outline-primary range-btn" data-range="6h">6h</button>
+                                    <button class="btn btn-primary range-btn" data-range="12h">12h</button>
+                                    <!-- Đặt mặc định -->
+                                    <button class="btn btn-outline-primary range-btn" data-range="24h">24h</button>
+                                    <button class="btn btn-outline-primary range-btn" data-range="3d">3 ngày</button>
+                                    <button class="btn btn-outline-primary range-btn" data-range="7d">7 ngày</button>
+                                </div>
+
+
+                            </div>
+                            <div id="sensorChart"></div>
+                            <!-- Vùng hiển thị biểu đồ -->
+                        </div>
+
+                    </div>
+                </div>
+
+
+
             </div>
         </div>
-        <div class="row justify-content-md-center">
+
+        <div class="col-12 col-xl-4 mb-4">
             <div class="col-12 mb-4">
-                <div class="card bg-yellow-alt shadow-sm">
-                    <div class="card-header d-flex flex-row align-items-center flex-0">
-                        <div class="d-block">
-                            <div class="h5 font-weight-normal mb-2">Sales Value</div>
-                            <h2 class="h3">$10,567</h2>
-                            <div class="small mt-2"> 
-                                <span class="font-weight-bold mr-2">Yesterday</span>                              
-                                <span class="fas fa-angle-up text-success"></span>                                   
-                                <span class="text-success font-weight-bold">10.57%</span>
-                            </div>
-                        </div>
-                        <div class="d-flex ml-auto">
-                            <a href="#" class="btn btn-secondary text-dark btn-sm mr-2">Month</a>
-                            <a href="#" class="btn btn-primary btn-sm mr-3">Week</a>
-                        </div>
-                    </div>
-                    <div class="card-body p-2">
-                        <div class="ct-chart-sales-value ct-double-octave ct-series-g"></div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-12 col-sm-6 col-xl-4 mb-4">
                 <div class="card border-light shadow-sm">
-                    <div class="card-body">
-                        <div class="row d-block d-xl-flex align-items-center">
-                            <div class="col-12 col-xl-5 text-xl-center mb-3 mb-xl-0 d-flex align-items-center justify-content-xl-center">
-                                <div class="icon icon-shape icon-md icon-shape-blue rounded mr-4 mr-sm-0"><span class="fas fa-chart-line"></span></div>
-                                <div class="d-sm-none">
-                                    <h2 class="h5">Customers</h2>
-                                    <h3 class="mb-1">345,678</h3>
-                                </div>
-                            </div>
-                            <div class="col-12 col-xl-7 px-xl-0">
-                                <div class="d-none d-sm-block">
-                                    <h2 class="h5">Customers</h2>
-                                    <h3 class="mb-1">345k</h3>
-                                </div>
-                                <small>Feb 1 - Apr 1,  <span class="icon icon-small"><span class="fas fa-globe-europe"></span></span> WorldWide</small> 
-                                <div class="small mt-2">                               
-                                    <span class="fas fa-angle-up text-success"></span>                                   
-                                    <span class="text-success font-weight-bold">18.2%</span> Since last month
-                                </div>
-                            </div>
-                        </div>
+                    <div class="card-header border-bottom border-light d-flex justify-content-between">
+                        <h2 class="h5 mb-0">Cảnh báo</h2>
+                        <a href="/alert" class="btn btn-sm btn-secondary">Xem thêm</a>
                     </div>
-                </div>
-            </div>
-            <div class="col-12 col-sm-6 col-xl-4 mb-4">
-                <div class="card border-light shadow-sm">
-                    <div class="card-body">
-                        <div class="row d-block d-xl-flex align-items-center">
-                            <div class="col-12 col-xl-5 text-xl-center mb-3 mb-xl-0 d-flex align-items-center justify-content-xl-center">
-                                <div class="icon icon-shape icon-md icon-shape-secondary rounded mr-4"><span class="fas fa-cash-register"></span></div>
-                                <div class="d-sm-none">
-                                    <h2 class="h5">Revenue</h2>
-                                    <h3 class="mb-1">$43,594</h3>
-                                </div>
-                            </div>
-                            <div class="col-12 col-xl-7 px-xl-0">
-                                <div class="d-none d-sm-block">
-                                    <h2 class="h5">Revenue</h2>
-                                    <h3 class="mb-1">$43,594</h3>
-                                </div>
-                                <small>Feb 1 - Apr 1,  <span class="icon icon-small"><span class="fas fa-globe-europe"></span></span> Worldwide</small>
-                                <div class="small mt-2">                               
-                                    <span class="fas fa-angle-up text-success"></span>                                   
-                                    <span class="text-success font-weight-bold">28.2%</span> Since last month
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-12 col-sm-6 col-xl-4 mb-4">
-                <div class="card border-light shadow-sm">
-                    <div class="card-body">
-                        <div class="row d-block d-xl-flex align-items-center">
-                            <div class="col-12 col-xl-5 text-xl-center mb-3 mb-xl-0 d-flex align-items-center justify-content-xl-center">
-                                <div class="ct-chart-traffic-share ct-golden-section ct-series-a"></div>
-                            </div>
-                            <div class="col-12 col-xl-7 px-xl-0">
-                                <h2 class="h5 mb-3">Traffic Share</h2>
-                                <h6 class="font-weight-normal text-gray"><span class="icon w-20 icon-xs icon-secondary mr-1"><span class="fas fa-desktop"></span></span> Desktop <a href="#" class="h6">60%</a></h6>
-                                <h6 class="font-weight-normal text-gray"><span class="icon w-20 icon-xs icon-primary mr-1"><span class="fas fa-mobile-alt"></span></span> Mobile Web <a href="#" class="h6">30%</a></h6>
-                                <h6 class="font-weight-normal text-gray"><span class="icon w-20 icon-xs icon-tertiary mr-1"><span class="fas fa-tablet-alt"></span></span> Tablet Web <a href="#" class="h6">10%</a></h6>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="row">
-            <div class="col-12 col-xl-8 mb-4">
-                <div class="row">
-                    <div class="col-12 mb-4">
-                        <div class="card border-light shadow-sm">
-                            <div class="card-header">
-                                <div class="row align-items-center">
-                                    <div class="col">
-                                    <h2 class="h5">Page visits</h2>
-                                    </div>
-                                    <div class="col text-right">
-                                        <a href="#" class="btn btn-sm btn-secondary">See all</a>
-                                    </div>
-                                </div>
-                            </div>
+                    <div class="card border-light shadow-sm">
+                        <div class="card-body">
                             <div class="table-responsive">
-                                <table class="table align-items-center table-flush">
+                                <table class="table table-centered table-nowrap mb-0 rounded">
                                     <thead class="thead-light">
-                                    <tr>
-                                        <th scope="col">Page name</th>
-                                        <th scope="col">Page Views</th>
-                                        <th scope="col">Page Value</th>
-                                        <th scope="col">Bounce rate</th>
-                                    </tr>
+                                        <tr>
+                                            <th class="border-0">#</th>
+                                            <th class="border-0">Cấp độ</th>
+                                            <th class="border-0">Nội dung cảnh báo</th>
+                                            <th class="border-0">Thời gian</th>
+                                        </tr>
                                     </thead>
                                     <tbody>
-                                    <tr>
-                                        <th scope="row">
-                                            /demo/admin/index.html
-                                        </th>
-                                        <td>
-                                            3,225
-                                        </td>
-                                        <td>
-                                            $20
-                                        </td>
-                                        <td>
-                                            <span class="fas fa-arrow-up text-danger mr-3"></span> 42,55%
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <th scope="row">
-                                            /demo/admin/forms.html
-                                        </th>
-                                        <td>
-                                            2,987
-                                        </td>
-                                        <td>
-                                            0
-                                        </td>
-                                        <td>
-                                            <span class="fas fa-arrow-down text-success mr-3"></span> 43,52%
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <th scope="row">
-                                            /demo/admin/util.html
-                                        </th>
-                                        <td>
-                                            2,844
-                                        </td>
-                                        <td>
-                                        294
-                                        </td>
-                                        <td>
-                                            <span class="fas fa-arrow-down text-success mr-3"></span> 32,35%
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <th scope="row">
-                                            /demo/admin/validation.html
-                                        </th>
-                                        <td>
-                                            2,050
-                                        </td>
-                                        <td>
-                                            $147
-                                        </td>
-                                        <td>
-                                            <span class="fas fa-arrow-up text-danger mr-3"></span> 50,87%
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <th scope="row">
-                                            /demo/admin/modals.html
-                                        </th>
-                                        <td>
-                                            1,483
-                                        </td>
-                                        <td>
-                                            $19
-                                        </td>
-                                        <td>
-                                            <span class="fas fa-arrow-down text-success mr-3"></span> 32,24%
-                                        </td>
-                                    </tr>
+                                        {% for alert in recent_alerts %}
+                                        <tr>
+                                            <td class="border-0">{{ forloop.counter }}</td>
+                                            <td class="border-0">
+                                                {% if alert.level == 'Low' %}
+                                                <span class="font-weight-bold text-success">Thấp</span>
+                                                {% elif alert.level == 'Medium' %}
+                                                <span class="font-weight-bold text-warning">Trung bình</span>
+                                                {% elif alert.level == 'High' %}
+                                                <span class="font-weight-bold text-orange">Cao</span>
+                                                {% elif alert.level == 'Critical' %}
+                                                <span class="font-weight-bold text-danger">Nguy cấp</span>
+                                                {% else %}
+                                                <span class="font-weight-bold text-muted">Không xác định</span>
+                                                {% endif %}
+                                            </td>
+                                            <td class="border-0">
+                                                {{ alert.message }}
+                                            </td>
+                                            <td class="border-0 text-muted">
+                                                {{ alert.created_at|date:"H:i d/m/Y" }}
+                                            </td>
+                                        </tr>
+                                        {% empty %}
+                                        <tr>
+                                            <td colspan="4" class="border-0 text-center text-muted">
+                                                Không có cảnh báo nào gần đây.
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
                                     </tbody>
                                 </table>
                             </div>
                         </div>
                     </div>
-                    <div class="col-12 col-lg-6 mb-4">
-                        <div class="card border-light shadow-sm">
-                            <div class="card-header border-bottom border-light d-flex justify-content-between">
-                                <h2 class="h5 mb-0">Team members</h2>
-                                <a href="#" class="btn btn-sm btn-secondary">See all</a>
-                            </div>
-                            <div class="card-body">
-                                <ul class="list-group list-group-flush list my--3">
-                                    <li class="list-group-item px-0">
-                                        <div class="row align-items-center">
-                                        <div class="col-auto">
-                                            <!-- Avatar -->
-                                            <a href="#" class="user-avatar">
-                                                <img class="rounded-circle" alt="Image placeholder" src="/static/assets/img/team/profile-picture-1.jpg">
-                                            </a>
-                                        </div>
-                                        <div class="col-auto ml--2">
-                                            <h4 class="h6 mb-0">
-                                                <a href="#">Christopher Wood</a>
-                                            </h4>
-                                            <span class="text-success">●</span>
-                                            <small>Online</small>
-                                        </div>
-                                        <div class="col text-right">
-                                            <a href="#" class="btn btn-sm btn-tertiary"><i class="fas fa-calendar-check mr-1"></i> Invite</a>
-                                        </div>
-                                        </div>
-                                    </li>
-                                    <li class="list-group-item px-0">
-                                        <div class="row align-items-center">
-                                            <div class="col-auto">
-                                                <!-- Avatar -->
-                                                <a href="#" class="user-avatar">
-                                                    <img class="rounded-circle" alt="Image placeholder" src="/static/assets/img/team/profile-picture-2.jpg">
-                                                </a>
-                                            </div>
-                                            <div class="col-auto ml--2">
-                                                <h4 class="h6 mb-0">
-                                                    <a href="#">Jose Leos</a>
-                                                </h4>
-                                                <span class="text-warning">●</span>
-                                                <small>In a meeting</small>
-                                            </div>
-                                            <div class="col text-right">
-                                                <a href="#" class="btn btn-sm btn-tertiary"><i class="fas fa-comment mr-1"></i> Message</a>
-                                            </div>
-                                        </div>
-                                    </li>
-                                    <li class="list-group-item px-0">
-                                        <div class="row align-items-center">
-                                            <div class="col-auto">
-                                                <!-- Avatar -->
-                                                <a href="#" class="user-avatar">
-                                                    <img class="rounded-circle" alt="Image placeholder" src="/static/assets/img/team/profile-picture-3.jpg">
-                                                </a>
-                                            </div>
-                                            <div class="col-auto ml--2">
-                                                <h4 class="h6 mb-0">
-                                                    <a href="#">Bonnie Green</a>
-                                                </h4>
-                                                <span class="text-danger">●</span>
-                                                <small>Offline</small>
-                                            </div>
-                                            <div class="col text-right">
-                                                <a href="#" class="btn btn-sm btn-tertiary"><i class="fas fa-calendar-check mr-1"></i> Invite</a>
-                                            </div>
-                                        </div>
-                                    </li>
-                                    <li class="list-group-item px-0">
-                                        <div class="row align-items-center">
-                                            <div class="col-auto">
-                                                <!-- Avatar -->
-                                                <a href="#" class="user-avatar">
-                                                    <img class="rounded-circle" alt="Image placeholder" src="/static/assets/img/team/profile-picture-4.jpg">
-                                                </a>
-                                            </div>
-                                            <div class="col-auto ml--2">
-                                            <h4 class="h6 mb-0">
-                                                    <a href="#">Neil Sims</a>
-                                            </h4>
-                                            <span class="text-success">●</span>
-                                            <small>Online</small>
-                                            </div>
-                                            <div class="col text-right">
-                                                <a href="#" class="btn btn-sm btn-tertiary"><i class="fas fa-comment mr-1"></i> Message</a>
-                                            </div>
-                                        </div>
-                                    </li>
-                                </ul>
-                            </div>
-                            </div>
-                    </div>
-                    <div class="col-12 col-lg-6 mb-4">
-                        <div class="card border-light shadow-sm">
-                            <div class="card-header border-bottom border-light">
-                                <h2 class="h5 mb-0">Progress track</h2>
-                            </div>
-                            <div class="card-body">
-                                <div class="row align-items-center mb-4">
-                                    <div class="col-auto">
-                                        <span class="icon icon-md text-purple"><span class="fab fa-bootstrap"></span></span>
-                                    </div>
-                                    <div class="col">
-                                        <div class="progress-wrapper">
-                                            <div class="progress-info">
-                                                <div class="h6 mb-0">Rocket - SaaS Template</div>
-                                                <div class="small font-weight-bold text-dark"><span>34 %</span></div>
-                                            </div>
-                                            <div class="progress mb-0">
-                                                <div class="progress-bar bg-purple" role="progressbar" aria-valuenow="34" aria-valuemin="0" aria-valuemax="100" style="width: 34%;"></div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="row align-items-center mb-4">
-                                    <div class="col-auto">
-                                        <span class="icon icon-md text-danger"><span class="fab fa-angular"></span></span>
-                                    </div>
-                                    <div class="col">
-                                        <div class="progress-wrapper">
-                                            <div class="progress-info">
-                                                <div class="h6 mb-0">Pixel - Design System</div>
-                                                <div class="small font-weight-bold text-dark"><span>60 %</span></div>
-                                            </div>
-                                            <div class="progress mb-0">
-                                                <div class="progress-bar bg-danger" role="progressbar" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100" style="width: 60%;"></div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="row align-items-center mb-4">
-                                    <div class="col-auto">
-                                        <span class="icon icon-md text-success"><span class="fab fa-vuejs"></span></span>
-                                    </div>
-                                    <div class="col">
-                                        <div class="progress-wrapper">
-                                            <div class="progress-info">
-                                                <div class="h6 mb-0">Spaces - Listings Template</div>
-                                                <div class="small font-weight-bold text-dark"><span>45 %</span></div>
-                                            </div>
-                                            <div class="progress mb-0">
-                                                <div class="progress-bar bg-tertiary" role="progressbar" aria-valuenow="45" aria-valuemin="0" aria-valuemax="100" style="width: 45%;"></div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="row align-items-center mb-4">
-                                    <div class="col-auto">
-                                        <span class="icon icon-md text-info"><span class="fab fa-react"></span></span>
-                                    </div>
-                                    <div class="col">
-                                        <div class="progress-wrapper">
-                                            <div class="progress-info">
-                                                <div class="h6 mb-0">Stellar - Dashboard</div>
-                                                <div class="small font-weight-bold text-dark"><span>35 %</span></div>
-                                            </div>
-                                            <div class="progress mb-0">
-                                                <div class="progress-bar bg-info" role="progressbar" aria-valuenow="35" aria-valuemin="0" aria-valuemax="100" style="width: 35%;"></div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="row align-items-center">
-                                    <div class="col-auto">
-                                        <span class="icon icon-md text-purple"><span class="fab fa-bootstrap"></span></span>
-                                    </div>
-                                    <div class="col">
-                                        <div class="progress-wrapper">
-                                            <div class="progress-info">
-                                                <div class="h6 mb-0">Volt - Dashboard</div>
-                                                <div class="small font-weight-bold text-dark"><span>34 %</span></div>
-                                            </div>
-                                            <div class="progress mb-0">
-                                                <div class="progress-bar bg-purple" role="progressbar" aria-valuenow="34" aria-valuemin="0" aria-valuemax="100" style="width: 34%;"></div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+
+
                 </div>
             </div>
-            <div class="col-12 col-xl-4 mb-4">
-                <div class="col-12 mb-4">
-                    <div class="card border-light shadow-sm">
-                        <div class="card-body d-flex flex-row align-items-center flex-0 border-bottom">
-                            <div class="d-block">
-                                <div class="h6 font-weight-normal text-gray mb-2">Total orders</div>
-                                <h2 class="h3">452</h2>
-                                <div class="small mt-2">                               
-                                    <span class="fas fa-angle-up text-success"></span>                                   
-                                    <span class="text-success font-weight-bold">18.2%</span>
-                                </div>
-                            </div>
-                            <div class="d-block ml-auto">
-                                <div class="d-flex align-items-center text-right mb-2">
-                                    <span class="shape-xs rounded-circle bg-quaternary mr-2"></span>
-                                    <span class="font-weight-normal small">July</span>
-                                </div>
-                                <div class="d-flex align-items-center text-right">
-                                    <span class="shape-xs rounded-circle bg-secondary mr-2"></span>
-                                    <span class="font-weight-normal small">August</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="card-body p-2">
-                            <div class="ct-chart-ranking ct-golden-section ct-series-a"></div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-12 px-0 mb-4">
-                    <div class="card border-light shadow-sm">
-                        <div class="card-body">
-                            <div class="d-flex align-items-center justify-content-between border-bottom border-light pb-3">
-                                <div>
-                                    <h6 class="mb-0"><span class="icon icon-xs mr-3"><span class="fas fa-globe-europe"></span></span>Global Rank</h6>
-                                </div>
-                                <div>
-                                    <a href="#" class="text-primary font-weight-bold">#755<span class="fas fa-chart-line ml-2"></span></a>
-                                </div>
-                            </div>
-                            <div class="d-flex align-items-center justify-content-between border-bottom border-light py-3">
-                                <div>
-                                    <h6 class="mb-0"><span class="icon icon-xs mr-3"><span class="fas fa-flag-usa"></span></span>Country Rank</h6>
-                                    <div class="small card-stats">United States<span class="icon icon-xs text-success ml-2"><span class="fas fa-angle-up"></span></span></div>
-                                </div>
-                                <div>
-                                    <a href="#" class="text-primary font-weight-bold">#32<span class="fas fa-chart-line ml-2"></span></a>
-                                </div>
-                            </div>
-                            <div class="d-flex align-items-center justify-content-between pt-3">
-                                <div>
-                                    <h6 class="mb-0"><span class="icon icon-xs mr-3"><span class="fas fa-folder-open"></span></span>Category Rank</h6>
-                                    <a href="#" class="small card-stats">Travel > Accomodation</a>
-                                </div>
-                                <div>
-                                    <a href="#" class="text-primary font-weight-bold">#16<span class="fas fa-chart-line ml-2"></span></a>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-12 px-0 mb-4">
-                    <div class="card border-light shadow-sm">
-                        <div class="card-body">
-                            <h2 class="h5">Acquisition</h2>
-                            <p>Tells you where your visitors originated from, such as search engines, social networks or website referrals.</p>
-                            <div class="d-block">
-                                <div class="d-flex align-items-center pt-3 mr-5">
-                                    <div class="icon icon-shape icon-sm icon-shape-danger rounded mr-3"><span class="fas fa-chart-bar"></span></div>
-                                    <div class="d-block">
-                                        <label class="mb-0">Bounce Rate</label>
-                                        <h4 class="mb-0">33.50%</h4>
-                                    </div>
-                                </div>
-                                <div class="d-flex align-items-center pt-3">
-                                    <div class="icon icon-shape icon-sm icon-shape-quaternary rounded mr-3"><span class="fas fa-chart-area"></span></div>
-                                    <div class="d-block">
-                                        <label class="mb-0">Sessions</label>
-                                        <h4 class="mb-0">9,567</h4>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+
+        </div>
+    </div>
+
+    {% include 'includes/footer.html' %}
+
+</main>
+<div class="modal fade" id="ttsModal" tabindex="-1" role="dialog" aria-labelledby="ttsModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="ttsModalLabel">Phát nội dung tới thiết bị</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Đóng">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <textarea class="form-control" id="ttsMessageInput" rows="4"
+                    placeholder="Nhập nội dung cần phát..."></textarea>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-primary" id="sendTTS">Phát</button>
             </div>
         </div>
-
-        {% include 'includes/footer.html' %}
-
-    </main>
+    </div>
+</div>
 
 {% endblock content %}
 
 <!-- Specific Page JS goes HERE  -->
-{% block javascripts %}{% endblock javascripts %}
+{% block javascripts %}
+<!-- jQuery (bắt buộc trước Bootstrap và script của bạn) -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+<script>
+
+    // Kết nối WebSocket TTS
+    const ttsSocket = new WebSocket("ws://" + window.location.host + "/ws/tts/");
+
+    ttsSocket.onopen = function () {
+        console.log("✅ Kết nối WebSocket TTS thành công");
+    };
+
+    ttsSocket.onmessage = function (e) {
+        const data = JSON.parse(e.data);
+        if (data.status === "played") {
+            showNotify("success", "Phát Thành công.");            // Gọi thông báo tại đây
+        }
+    };
+
+    ttsSocket.onclose = function (e) {
+        console.log("❌ Kết nối WebSocket TTS đã đóng", e);
+    };
+
+    ttsSocket.onerror = function (e) {
+        console.error("💥 Lỗi WebSocket TTS:", e);
+    };
+
+    // Kết nối WebSocket Sensor
+    const sensorSocket = new WebSocket("ws://" + window.location.host + "/ws/sensor/");
+
+    sensorSocket.onopen = function () {
+        console.log("✅ Kết nối WebSocket Sensor thành công");
+    };
+    sensorSocket.onmessage = function (e) {
+        const sensorData = JSON.parse(e.data);
+        console.log("📡 Cập nhật cảm biến:", sensorData);
+
+        // Tìm thẻ card theo sensor_id
+        const card = document.querySelector(`.card[data-sensor-id="${sensorData.sensor_id}"]`);
+        if (!card) return;
+
+        // Tìm và cập nhật giá trị
+        const valueElement = card.querySelector('h3.mb-1');
+        if (valueElement) {
+            valueElement.textContent = `${sensorData.value} ${sensorData.unit || ''}`;
+        }
+
+        // Tìm và cập nhật thời gian
+        const timeElement = card.querySelector('small');
+        if (timeElement) {
+            timeElement.textContent = `Cập nhật lúc: ${formatTime(sensorData.updated_at)}`;
+        }
+    };
+
+    // Hàm định dạng lại timestamp
+    function formatTime(timestamp) {
+        const date = new Date(timestamp);
+        if (isNaN(date)) {
+            console.warn("⛔ Không thể parse thời gian:", timestamp);
+            return "Không rõ thời gian";
+        }
+
+        return date.toLocaleString('vi-VN', {
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+        });
+    }
+
+
+    sensorSocket.onclose = function (e) {
+        console.log("❌ Kết nối WebSocket Sensor đã đóng", e);
+    };
+
+    sensorSocket.onerror = function (e) {
+        console.error("💥 Lỗi WebSocket Sensor:", e);
+    };
+
+    let chart;
+
+    const colors = {
+        "Nhiệt Độ": '#FF6384',
+        "Nhịp Tim": '#36A2EB',
+        "SPO2": '#4BC0C0'
+    };
+    const maxPoints = 1000; // số điểm tối đa cho render tổng thể
+
+    const downsample = (data, maxPoints) => {
+        const sampled = [];
+        const step = Math.ceil(data.length / maxPoints);
+        for (let i = 0; i < data.length; i += step) {
+            sampled.push(data[i]);
+        }
+        return sampled;
+    };
+
+    function loadChartData(range = '12h') {
+        fetch(`/chart-data/?range=${range}`)
+            .then(response => response.json())
+
+            .then(data => {
+                console.log(data);
+                const series = Object.entries(data).map(([name, values]) => ({
+                    name: name,
+                    data: values
+                }));
+
+                const options = {
+                    chart: {
+                        id: 'sensor-chart',
+                        type: 'line',
+                        height: 400,
+                        zoom: {
+                            enabled: true,
+                            type: 'x',
+                            autoScaleYaxis: true
+                        },
+                        toolbar: {
+                            autoSelected: 'zoom',
+                            tools: {
+                                zoom: true,
+                                zoomin: true,
+                                zoomout: true,
+                                pan: true,
+                                reset: true,
+                            }
+                        },
+
+                    },
+                    markers: {
+                        size: 0
+                    },
+                    tooltip: {
+                        shared: true,
+                        x: { format: 'HH:mm dd/MM/yyyy' }
+                    }
+                    ,
+                    stroke: {
+                        curve: 'smooth',
+                        width: 2,
+                    },
+
+                    xaxis: {
+                        type: 'datetime',
+                        title: {
+                            text: 'Thời gian'
+                        }
+                    },
+                    yaxis: {
+                        title: {
+                            text: 'Giá trị đo'
+                        }
+                    },
+                    tooltip: {
+                        x: {
+                            format: 'HH:mm dd/MM/yyyy'
+                        }
+                    },
+                    colors: Object.values(colors),
+                    series: series,
+                };
+
+                if (chart) {
+                    chart.updateOptions(options);
+                } else {
+                    chart = new ApexCharts(document.querySelector("#sensorChart"), options);
+                    chart.render();
+                }
+            });
+    }
+
+    // Sự kiện chọn mốc thời gian
+    document.querySelectorAll('.range-btn').forEach(btn => {
+        btn.addEventListener('click', function () {
+            document.querySelectorAll('.range-btn').forEach(b => {
+                b.classList.remove('btn-primary');
+                b.classList.add('btn-outline-primary');
+            });
+
+            this.classList.remove('btn-outline-primary');
+            this.classList.add('btn-primary');
+
+            const range = this.dataset.range;
+            loadChartData(range);
+        });
+    });
+
+    // Load mặc định 24h
+    document.addEventListener('DOMContentLoaded', function () {
+        loadChartData('12h');
+    });
+</script>
+
+<script>
+    document.getElementById("sendTTS").addEventListener("click", function () {
+        const input = document.getElementById("ttsMessageInput").value;
+
+        if (!input.trim()) {
+            showNotify("error", "Nội dung không được để trống.");
+            return;
+        }
+
+        fetch("{% url 'zalo_tts' %}?message=" + encodeURIComponent(input))
+            .then(response => response.json())
+            .then(data => {
+                if (data.audio_url) {
+                    showNotify("success", "✅ Đang chuyển đổi văn bản...");
+                    console.log("🔊 Audio URL:", data.audio_url);
+                    $('#ttsModal').modal('hide');
+                } else {
+                    showNotify("error", data.error || "Đã xảy ra lỗi.");
+                }
+            })
+            .catch(error => {
+                console.error("TTS error:", error);
+                showNotify("error", "Lỗi kết nối máy chủ.");
+            });
+    });
+
+    function showNotify(type, message) {
+        const notyf = new Notyf({
+            position: { x: 'right', y: 'top' },
+            types: [
+                {
+                    type: 'error',
+                    background: '#FA5151',
+                    icon: { className: 'fas fa-times', tagName: 'span', color: '#fff' }
+                },
+                {
+                    type: 'success',
+                    background: '#00C851',
+                    icon: { className: 'fas fa-check', tagName: 'span', color: '#fff' }
+                }
+            ]
+        });
+
+        notyf.open({ type: type, message: message });
+    }
+</script>
+
+
+
+{% endblock javascripts %}

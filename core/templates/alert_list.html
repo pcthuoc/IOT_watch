@@ -1,0 +1,216 @@
+{% extends "layouts/base.html" %}
+
+{% block title %} Danh sách File Âm Thanh {% endblock %}
+
+{% block stylesheets %}{% endblock stylesheets %}
+
+{% block content %}
+
+<main class="content">
+
+    {% include 'includes/navigation.html' %}
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center py-4">
+        <div class="d-block mb-4 mb-md-0">
+            <nav aria-label="breadcrumb" class="d-none d-md-inline-block">
+                <h2 class="h4 m-0">Danh sách Cảnh báo</h2>
+            </nav>
+        </div>
+        <div class="btn-group">
+
+    </div>
+    </div>
+
+
+    <div class="card card-body border-light shadow-sm table-wrapper table-responsive pt-0">
+        <div class="table-responsive">
+            <table class="table text-center align-middle">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Thời gian</th>
+                        <th>Nội dung</th>
+                        <th>Trạng thái</th>
+                        <th>Tùy chọn</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for alert in alerts %}
+                    <tr>
+                        <td>{{ forloop.counter|add:page_obj.start_index|add:-1 }}</td>
+                        <td>{{ alert.created_at|date:"Y-m-d H:i:s" }}</td>
+                        <td>{{ alert.message }}</td>
+                        <td>
+                            {% if alert.level == 'Low' %}
+                                <span class="font-weight-bold text-success">Thấp</span>
+                            {% elif alert.level == 'Medium' %}
+                                <span class="font-weight-bold text-warning">Trung bình</span>
+                            {% elif alert.level == 'High' %}
+                                <span class="font-weight-bold text-orange">Cao</span>
+                            {% elif alert.level == 'Critical' %}
+                                <span class="font-weight-bold text-danger">Nguy cấp</span>
+                            {% else %}
+                                <span class="font-weight-bold text-muted">Không xác định</span>
+                            {% endif %}
+                        </td>                        
+                        <td>
+                            <div class="btn-group">
+                                <button class="btn btn-link text-dark dropdown-toggle dropdown-toggle-split m-0 p-0"
+                                    data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                    <span class="icon icon-sm">
+                                        <span class="fas fa-ellipsis-h icon-dark"></span>
+                                    </span>
+                                </button>
+                                <div class="dropdown-menu">
+                                    <!-- Nút xóa -->
+                                    <button class="dropdown-item text-danger delete-btn" data-id="{{ alert.id }}"
+                                        data-toggle="modal" data-target="#deleteModal">
+                                        <span class="fa fa-trash"></span> Xóa
+                                    </button>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6">Không có cảnh báo nào.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        <div class="d-flex justify-content-between mt-3">
+            <nav aria-label="Page navigation">
+                <ul class="pagination">
+                    {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}">
+                            <i class="fas fa-chevron-left"></i>
+                        </a>
+                    </li>
+                    {% endif %}
+
+                    {% for num in page_obj.paginator.page_range %}
+                    {% if page_obj.number == num %}
+                    <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                    {% else %}
+                    <li class="page-item"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
+                    {% endif %}
+                    {% endfor %}
+
+                    {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}">
+                            <i class="fas fa-chevron-right"></i>
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            <!-- Hiển thị số bản ghi hiện tại và tổng số bản ghi -->
+            <div class="font-weight-bold small">
+                Hiển thị <b>{{ page_obj.start_index }}</b> đến
+                <b>{{ page_obj.end_index }}</b> trong tổng số
+                <b>{{ page_obj.paginator.count }}</b> bản ghi.
+            </div>
+
+
+        </div>
+
+    </div>
+
+    {% include 'includes/footer.html' %}
+
+</main>
+
+
+
+<div class="modal fade" id="deleteModal" tabindex="-1" role="dialog" aria-labelledby="deleteModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel">Xác nhận xóa</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                Bạn có chắc chắn muốn xóa lời nhắc này với ID <strong id="deleteID"></strong> không?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-danger" id="confirmDelete">Xóa</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+{% endblock content %}
+{% block javascripts %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/4.6.0/js/bootstrap.bundle.min.js"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        let selectedId = "";
+
+        // Khi nhấn vào nút xóa, lấy ID của lời nhắc và hiển thị trong modal
+        $(document).on("click", ".delete-btn", function () {
+            selectedId = $(this).data("id");
+            $("#deleteID").text(selectedId);  // Hiển thị ID trong modal
+        });
+
+        // Khi nhấn nút Xóa trong modal
+        $("#confirmDelete").click(function () {
+            if (!selectedId) {
+                alert("Lỗi: Không có ID lời nhắc để xóa!");
+                return;
+            }
+
+            // Gửi yêu cầu xóa lời nhắc với ID đã chọn
+            fetch(`alert/delete/${selectedId}/`, {
+                method: "POST",
+                headers: {
+                    "X-CSRFToken": "{{ csrf_token }}"
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Đóng modal và xóa class backdrop/modal-open
+                        $("#deleteModal").modal("hide");
+                        setTimeout(() => {
+                            $("body").removeClass("modal-open");
+                            $(".modal-backdrop").remove();
+                        }, 500);
+
+                        // // Hiển thị thông báo thành công
+                        // alert(data.message);
+
+                        // Reload trang sau khi xóa thành công
+                        setTimeout(() => location.reload(), 1000);
+                    } else {
+                        $("#deleteModal").modal("hide");
+                        setTimeout(() => {
+                            $("body").removeClass("modal-open");
+                            $(".modal-backdrop").remove();
+                        }, 500);
+                        alert(data.message);  // Hiển thị thông báo lỗi
+                    }
+                })
+                .catch(error => {
+                    console.error("Lỗi:", error);
+                    $("body").removeClass("modal-open");
+                    $(".modal-backdrop").remove();
+                    $("#deleteModal").modal("hide");
+                    alert("Đã xảy ra lỗi! Vui lòng thử lại.");
+                });
+        });
+    });
+</script>
+
+
+{% endblock javascripts %}
