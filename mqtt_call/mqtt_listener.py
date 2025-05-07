@@ -69,7 +69,7 @@ def process_mqtt_queue():
             if topic_parts[0] != "IOT":
                 continue
 
-            if len(topic_parts) == 2 and topic_parts[1] == "alret":
+            if len(topic_parts) == 2 and topic_parts[1] == "alert":
                 handle_alert(payload)
             elif len(topic_parts) == 3 and topic_parts[1] == "sensor":
                 sensor_id = topic_parts[2]

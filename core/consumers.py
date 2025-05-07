@@ -50,7 +50,6 @@ class TTSConsumer(AsyncWebsocketConsumer):
     # Hàm nhận dữ liệu từ backend group_send
     async def tts_played(self, event):
         await self.send(text_data=json.dumps({
-            "url": event["url"],
             "status": "played",
             "username": event["username"]
         }))
