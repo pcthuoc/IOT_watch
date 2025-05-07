@@ -9,6 +9,9 @@ from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
 from django.conf import settings
 from django.contrib.auth.models import User
+import logging
+logger = logging.getLogger(__name__)
+
 
 
 # Hàng đợi xử lý tin nhắn MQTT
@@ -29,7 +32,32 @@ def on_message(client, userdata, msg):
         print(f"[MQTT] Message received from topic: {msg.topic}")
     except Exception as e:
         print(f"[ERROR] Failed to enqueue MQTT message: {e}")
+def publish_message(topic, payload):
+    client = connect_mqtt()
+    if client:
+        try:
+            client.publish(topic, json.dumps(payload))
+            logger.info(f"Published to topic '{topic}' with payload '{payload}'")
+        except Exception as e:
+            logger.error(f"Failed to publish message: {e}")
+    else:
+        logger.error("MQTT client connection failed")
+def connect_mqtt():
+    client = mqtt.Client()
+    client.username_pw_set(settings.MQTT_USERNAME, settings.MQTT_PASSWORD)
+    client.on_connect = on_connect
+    client.on_message = on_message
 
+    broker_address = settings.MQTT_BROKER_HOST
+    broker_port = settings.MQTT_BROKER_PORT
+
+    try:
+        client.connect(broker_address, broker_port, 60)
+        logger.info("MQTT client connected")
+        return client
+    except Exception as e:
+        logger.error(f"Failed to connect to MQTT broker: {e}")
+        return None
 # ==== 3. Hàm xử lý logic từ các topic MQTT ====
 def process_mqtt_queue():
     while True:
@@ -78,7 +106,7 @@ def handle_sensor_data(sensor_id, payload):
             return
 
         # Tìm sensor theo sensor_id và user
-        sensor = Sensors.objects.filter(sensor_id=sensor_id, user=user).first()
+        sensor = Sensors.objects.filter(sensor_id=f"sensor_{sensor_id}", user=user).first()
         if not sensor:
             print(f"[INFO] Sensor '{sensor_id}' không thuộc user '{username}'.")
             return
@@ -97,7 +125,10 @@ def handle_sensor_data(sensor_id, payload):
         # Cập nhật giá trị và thời gian mới
         sensor.value = value
         sensor.updated_at = now
+        unit=sensor.unit
         sensor.save()
+        print(unit)
+
 
         # Gửi WebSocket tới đúng user
         channel_layer = get_channel_layer()
@@ -105,11 +136,13 @@ def handle_sensor_data(sensor_id, payload):
             f"sensor_user_{user.id}",
             {
                 "type": "send_sensor_data",
-                "sensor_id": sensor_id,
+                "sensor_id": f"sensor_{sensor_id}",
                 "value": value,
+                "unit": unit,
                 "updated_at": now.isoformat()
             }
         )
+        sensor.save()
 
         print(f"[MQTT] Cập nhật thành công sensor '{sensor_id}' cho user '{username}'")
 

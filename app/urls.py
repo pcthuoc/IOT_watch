@@ -17,6 +17,9 @@ urlpatterns = [
     path('reminder/add/', ReminderAddEditView.as_view(), name='add_reminder'),  # Thêm lời nhắc
     path('reminder/edit/<int:reminder_id>/', ReminderAddEditView.as_view(), name='edit_reminder'),  # Sửa lời nhắc
     path('reminder/delete/<int:reminder_id>/', views.delete_reminder, name='delete_reminder'),
+    path('reminderlist', ReminderListView.as_view(), name='list_reminder'),  # Danh sách lời nhắc
+    path('api/reminders/pending/', views.get_pending_reminders_json, name='reminder_pending_json'),
+
     
     path('alert', AlertListView.as_view(), name='alert_reminder'),  # Danh sách lời nhắc
     path('alert/delete/<int:alert_id>/', views.delete_alert, name='delete_alert'),

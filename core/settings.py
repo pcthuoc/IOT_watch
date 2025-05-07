@@ -20,7 +20,7 @@ MQTT_BROKER_PORT = int(os.getenv('MQTT_BROKER_PORT', 1883))
 MQTT_TOPIC = os.getenv('MQTT_TOPIC', 'IOT/#')
 MQTT_USERNAME = os.getenv('MQTT_USERNAME', 'admin')
 MQTT_PASSWORD = os.getenv('MQTT_PASSWORD', 'admin')
-TIME_SAVE = os.getenv('TIME_SAVE', 5)
+TIME_SAVE = os.getenv('TIME_SAVE', 1)
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.environ.get('SECRET_KEY')

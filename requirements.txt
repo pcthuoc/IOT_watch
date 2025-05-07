@@ -18,3 +18,5 @@ channels_redis
 djangorestframework
 daphne
 django-import-export
+ffmpeg
+pydub

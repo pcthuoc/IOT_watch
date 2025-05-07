@@ -26,6 +26,7 @@ class SensorConsumer(AsyncWebsocketConsumer):
         await self.send(text_data=json.dumps({
             "sensor_id": event["sensor_id"],
             "value": event["value"],
+            "unit": event["unit"],
             "updated_at": event["updated_at"]
         }))
 class TTSConsumer(AsyncWebsocketConsumer):

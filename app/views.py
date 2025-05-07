@@ -25,6 +25,17 @@ from django.utils.timezone import now, timedelta
 from django.http import JsonResponse
 from django.conf import settings
 import requests
+from django.utils.timezone import now
+from django.contrib.auth.models import User
+from django.utils.timezone import localtime, now
+from django.http import HttpResponse
+import json
+from mqtt_call.mqtt_listener  import connect_mqtt
+import json
+import logging
+from mqtt_call.mqtt_listener  import publish_message  # Sửa tên hàm nếu cần
+logger = logging.getLogger(__name__)
+
 @login_required(login_url="/login/")
 
 def dashboard(request):
@@ -138,7 +149,30 @@ def add_edit_reminder(request, reminder_id=None):
 
     return render(request, 'reminder/reminder_form.html', {'form': form, 'reminder': reminder})
 
+def get_pending_reminders_json(request):
+    try:
+        user = User.objects.get(username="an_nguyen")
+    except User.DoesNotExist:
+        return JsonResponse({"error": "User an_nguyen not found"}, status=404)
 
+    reminders = Reminder.objects.filter(
+        user=user,
+        status=Reminder.PENDING,
+    ).order_by('remind_at')
+
+    data = []
+    for r in reminders:
+        local_time = localtime(r.remind_at)
+        item = {
+            "date": local_time.strftime("%d/%m"),
+            "time": local_time.strftime("%H:%M"),
+            "message": r.message
+        }
+        data.append(item)
+    return HttpResponse(
+        json.dumps(data, ensure_ascii=False),
+        content_type="application/json"
+    )
 class AlertListView(LoginRequiredMixin, ListView):
     model = Alert
     paginate_by = 5  # Hiển thị 10 file mỗi trang
@@ -178,7 +212,7 @@ def zalo_tts(request):
         payload = {
             "input": input_text,
             "speaker_id": request.GET.get("speaker_id", 1),
-            "speed": request.GET.get("speed", 1.0),
+            "speed": request.GET.get("speed", 0.8),
             "encode_type": request.GET.get("encode_type", 1),
         }
 
@@ -193,6 +227,18 @@ def zalo_tts(request):
             if result.get("error_code") == 0:
                 audio_url = result["data"]["url"]
                 print("🔊 Zalo TTS Audio URL:", audio_url)
+                client = connect_mqtt()
+                if client:
+                    new_topic = "IOT/reminder/play"
+                    payload = {
+                        "url": audio_url,
+                        "status": "playing",
+                        "username": request.user.username
+                    }
+                    publish_message(new_topic, payload)
+                    client.loop_stop()
+                else:
+                    print("[ERROR] MQTT client not initialized.")
                 return JsonResponse({"audio_url": audio_url})
             else:
                 return JsonResponse({"error": result.get("error_message")}, status=500)
